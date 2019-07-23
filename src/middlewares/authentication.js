@@ -1,15 +1,21 @@
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
-var SEED = require('../config/config').SEED;
+const SEED = require('../config/config').SEED;
 
 exports.verifyToken = function(req, res, next) {
-    var token = req.headers['authorization'];
+    const token = req.query.token ? req.query.token : req.headers['token'];
 
     if (!token) {
         return res.status(401).json({
             ok: false,
             message: 'Invalid token',
-            errors: { mesage: 'Token inválido' }
+            err: {
+                errors: {
+                    token: {
+                        message: 'Token inválido'
+                    }
+                }
+            }
         });
     } else {
         if (token.startsWith('Bearer ')) {

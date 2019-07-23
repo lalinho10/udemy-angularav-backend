@@ -1,7 +1,7 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 
 const mdwAuth = require('../middlewares/authentication');
+const Hospital = require('../models/hospital');
 const Appuser = require('../models/appuser');
 
 const app = express();
@@ -9,7 +9,7 @@ const app = express();
 
 
 /***********************************************************
- * Consulta de usuarios
+ * Consulta de hospitales
  ***********************************************************/
 app.get('/', (req, res) => {
     let pagina = req.query.pagina || 0;
@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
     if (pagina <= 0) {
         return res.status(406).json({
             ok: false,
-            message: 'Error while getting users',
+            message: 'Error while getting hospitals',
             err: {
                 errors: {
                     pagina: {
@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
     if (regspp <= 0) {
         return res.status(406).json({
             ok: false,
-            message: 'Error while getting users',
+            message: 'Error while getting hospitals',
             err: {
                 errors: {
                     regspp: {
@@ -48,42 +48,42 @@ app.get('/', (req, res) => {
 
     let offset = (pagina - 1) * regspp;
 
-    Appuser.find({}, 'name email image role').skip(offset).limit(regspp).exec((err, appusers) => {
+    Hospital.find({}).skip(offset).limit(regspp).populate('user', 'name email').exec((err, hospitals) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while getting users',
+                message: 'Error while getting hospitals',
                 err
             });
         }
 
-        Appuser.countDocuments((err, numUsers) => {
+        Hospital.countDocuments((err, numHospitals) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    message: 'Error while getting users',
+                    message: 'Error while getting hospitals',
                     err
                 });
             }
 
             let limInf = offset + 1;
             let limSupTemp = (offset + regspp);
-            let limSup = (limSupTemp > numUsers) ? numUsers : limSupTemp;
+            let limSup = (limSupTemp > numHospitals) ? numHospitals : limSupTemp;
 
             let responseObject = {};
 
-            if (appusers.length > 0) {
+            if (hospitals.length > 0) {
                 responseObject = {
                     ok: true,
-                    appusers,
+                    hospitals,
                     desde: limInf,
                     hasta: limSup,
-                    total: numUsers
+                    total: numHospitals
                 };
             } else {
                 responseObject = {
                     ok: true,
-                    appusers
+                    hospitals
                 };
             }
 
@@ -93,58 +93,24 @@ app.get('/', (req, res) => {
 });
 
 /***********************************************************
- * Creación de un nuevo usuario
+ * Creación de un nuevo hospital
  ***********************************************************/
 app.post('/', mdwAuth.verifyToken, (req, res) => {
     const body = req.body;
 
-    const appuser = new Appuser({
-        name: body.name,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        image: body.image,
-        role: body.role
-    });
-
-    appuser.save((err, createdUser) => {
-        if (err) {
-            return res.status(400).json({
-                ok: false,
-                message: 'Error while creating a user',
-                err
-            });
-        }
-
-        createdUser.password = ';)';
-
-        res.status(201).json({
-            ok: true,
-            user: createdUser,
-            userToken: req.user
-        });
-    });
-});
-
-/***********************************************************
- * Actualización de un usuario
- ***********************************************************/
-app.put('/:id', mdwAuth.verifyToken, (req, res) => {
-    const id = req.params.id;
-    const body = req.body;
-
-    Appuser.findById(id, (err, appuser) => {
+    Appuser.findById(body.userId, (err, appuserDB) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while updating user',
+                message: 'Error while creating a hospital',
                 err
             });
         }
 
-        if (!appuser) {
+        if (!appuserDB) {
             return res.status(400).json({
                 ok: false,
-                message: 'Error while updating a user',
+                message: 'Error while creating a hospital',
                 err: {
                     errors: {
                         id: {
@@ -155,63 +121,97 @@ app.put('/:id', mdwAuth.verifyToken, (req, res) => {
             });
         }
 
-        appuser.name = body.name;
-        appuser.email = body.email;
-        appuser.role = body.role;
+        const hospital = new Hospital({
+            name: body.name,
+            user: body.userId
+        });
 
-        appuser.save((err, updatedUser) => {
+        hospital.save((err, createdHospital) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    message: 'Error while updating a user',
+                    message: 'Error while creating a hospital',
                     err
                 });
             }
 
-            updatedUser.password = ';)';
-
-            res.status(200).json({
+            res.status(201).json({
                 ok: true,
-                user: updatedUser
+                hospital: createdHospital
             });
         });
     });
 });
 
 /***********************************************************
- * Eliminación de un usuario
+ * Actualización de un hospital
  ***********************************************************/
-app.delete('/:id', mdwAuth.verifyToken, (req, res) => {
-    const id = req.params.id;
+app.put('/:id', mdwAuth.verifyToken, (req, res) => {
+    let id = req.params.id;
+    let body = req.body;
 
-    Appuser.findByIdAndRemove(id, (err, removedUser) => {
+    Hospital.findByIdAndUpdate(id, body, { new: true, runValidators: true, context: 'query' }, (err, updatedHospital) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while deleting a user',
+                message: 'Error while updating a hospital',
                 err
             });
         }
 
-        if (!removedUser) {
+        if (!updatedHospital) {
             return res.status(400).json({
                 ok: false,
-                message: 'Error while deleting a user',
+                message: 'Error while updating a hospital',
                 err: {
                     errors: {
                         id: {
-                            message: 'No se encontró algún usuario con el ID proporcionado'
+                            message: 'No se encontró algún hospital con el ID proporcionado'
                         }
                     }
                 }
             });
         }
 
-        removedUser.password = ';)';
+        res.status(200).json({
+            ok: true,
+            hospital: updatedHospital
+        });
+    });
+});
+
+/***********************************************************
+ * Eliminación de un hospital
+ ***********************************************************/
+app.delete('/:id', mdwAuth.verifyToken, (req, res) => {
+    let id = req.params.id;
+
+    Hospital.findByIdAndRemove(id, (err, removedHospital) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error while deleting a hospital',
+                err
+            });
+        }
+
+        if (!removedHospital) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error while deleting a hospital',
+                err: {
+                    errors: {
+                        id: {
+                            message: 'No se encontró algún hospital con el ID proporcionado'
+                        }
+                    }
+                }
+            });
+        }
 
         res.status(200).json({
             ok: true,
-            user: removedUser
+            hospital: removedHospital
         });
     });
 });

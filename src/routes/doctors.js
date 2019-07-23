@@ -1,15 +1,14 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 
 const mdwAuth = require('../middlewares/authentication');
-const Appuser = require('../models/appuser');
+const Doctor = require('../models/doctor');
 
 const app = express();
 
 
 
 /***********************************************************
- * Consulta de usuarios
+ * Consulta de doctores
  ***********************************************************/
 app.get('/', (req, res) => {
     let pagina = req.query.pagina || 0;
@@ -18,7 +17,7 @@ app.get('/', (req, res) => {
     if (pagina <= 0) {
         return res.status(406).json({
             ok: false,
-            message: 'Error while getting users',
+            message: 'Error while getting doctors',
             err: {
                 errors: {
                     pagina: {
@@ -35,7 +34,7 @@ app.get('/', (req, res) => {
     if (regspp <= 0) {
         return res.status(406).json({
             ok: false,
-            message: 'Error while getting users',
+            message: 'Error while getting doctors',
             err: {
                 errors: {
                     regspp: {
@@ -48,42 +47,42 @@ app.get('/', (req, res) => {
 
     let offset = (pagina - 1) * regspp;
 
-    Appuser.find({}, 'name email image role').skip(offset).limit(regspp).exec((err, appusers) => {
+    Doctor.find({}).skip(offset).limit(regspp).populate('user', 'name email').populate('hospital', 'name').exec((err, doctors) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while getting users',
+                message: 'Error while getting doctors',
                 err
             });
         }
 
-        Appuser.countDocuments((err, numUsers) => {
+        Doctor.countDocuments((err, numDoctors) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    message: 'Error while getting users',
+                    message: 'Error while getting doctors',
                     err
                 });
             }
 
             let limInf = offset + 1;
             let limSupTemp = (offset + regspp);
-            let limSup = (limSupTemp > numUsers) ? numUsers : limSupTemp;
+            let limSup = (limSupTemp > numDoctors) ? numDoctors : limSupTemp;
 
             let responseObject = {};
 
-            if (appusers.length > 0) {
+            if (doctors.length > 0) {
                 responseObject = {
                     ok: true,
-                    appusers,
+                    doctors,
                     desde: limInf,
                     hasta: limSup,
-                    total: numUsers
+                    total: numDoctors
                 };
             } else {
                 responseObject = {
                     ok: true,
-                    appusers
+                    doctors
                 };
             }
 
@@ -93,125 +92,103 @@ app.get('/', (req, res) => {
 });
 
 /***********************************************************
- * Creación de un nuevo usuario
+ * Creación de un nuevo doctor
  ***********************************************************/
 app.post('/', mdwAuth.verifyToken, (req, res) => {
     const body = req.body;
 
-    const appuser = new Appuser({
+    const doctor = new Doctor({
         name: body.name,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
         image: body.image,
-        role: body.role
+        user: body.userId,
+        hospital: body.hospitalId
     });
 
-    appuser.save((err, createdUser) => {
+    doctor.save((err, createdDoctor) => {
         if (err) {
-            return res.status(400).json({
+            return res.status(500).json({
                 ok: false,
-                message: 'Error while creating a user',
+                message: 'Error while creating a doctor',
                 err
             });
         }
 
-        createdUser.password = ';)';
-
         res.status(201).json({
             ok: true,
-            user: createdUser,
-            userToken: req.user
+            doctor: createdDoctor
         });
     });
 });
 
 /***********************************************************
- * Actualización de un usuario
+ * Actualización de un doctor
  ***********************************************************/
 app.put('/:id', mdwAuth.verifyToken, (req, res) => {
     const id = req.params.id;
     const body = req.body;
 
-    Appuser.findById(id, (err, appuser) => {
+    Doctor.findByIdAndUpdate(id, body, { new: true, runValidators: true, context: 'query' }, (err, updatedDoctor) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while updating user',
+                message: 'Error while updating a doctor',
                 err
             });
         }
 
-        if (!appuser) {
+        if (!updatedDoctor) {
             return res.status(400).json({
                 ok: false,
-                message: 'Error while updating a user',
+                message: 'Error while updating a doctor',
                 err: {
                     errors: {
                         id: {
-                            message: 'No se encontró algún usuario con el ID proporcionado'
+                            message: 'No se encontró algún médico con el ID proporcionado'
                         }
                     }
                 }
             });
         }
 
-        appuser.name = body.name;
-        appuser.email = body.email;
-        appuser.role = body.role;
-
-        appuser.save((err, updatedUser) => {
-            if (err) {
-                return res.status(500).json({
-                    ok: false,
-                    message: 'Error while updating a user',
-                    err
-                });
-            }
-
-            updatedUser.password = ';)';
-
-            res.status(200).json({
-                ok: true,
-                user: updatedUser
-            });
+        res.status(200).json({
+            ok: true,
+            doctor: updatedDoctor
         });
     });
 });
 
 /***********************************************************
- * Eliminación de un usuario
+ * Eliminación de un doctor
  ***********************************************************/
 app.delete('/:id', mdwAuth.verifyToken, (req, res) => {
-    const id = req.params.id;
+    let id = req.params.id;
 
-    Appuser.findByIdAndRemove(id, (err, removedUser) => {
+    Doctor.findByIdAndRemove(id, (err, removedDoctor) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while deleting a user',
+                message: 'Error while deleting a doctor',
                 err
             });
         }
 
-        if (!removedUser) {
+        if (!removedDoctor) {
             return res.status(400).json({
                 ok: false,
-                message: 'Error while deleting a user',
+                message: 'Error while deleting a doctor',
                 err: {
                     errors: {
                         id: {
-                            message: 'No se encontró algún usuario con el ID proporcionado'
+                            message: 'No se encontró algún médico con el ID proporcionado'
                         }
                     }
                 }
             });
         }
 
-        removedUser.password = ';)';
-
         res.status(200).json({
             ok: true,
-            user: removedUser
+            doctor: removedDoctor
         });
     });
 });
