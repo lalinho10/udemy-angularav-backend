@@ -1,17 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 
-
 const express = require('express');
 
-
 const { verifyToken } = require('../middlewares/authentication');
-
 
 const app = express();
 
 
 
+/***********************************************************
+ * Consulta de imágenes
+ ***********************************************************/
 app.get('/:type/:image', verifyToken, (req, res) => {
     const allowedTypes = ['doctors', 'hospitals', 'users'];
 

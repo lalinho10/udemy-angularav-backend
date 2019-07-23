@@ -12,7 +12,6 @@ const app = express();
 /***********************************************************
  * Búsqueda específica por colección
  ***********************************************************/
-
 app.get('/collection/:colName/:search', (req, res) => {
     var colName = req.params.colName;
     var search = req.params.search;

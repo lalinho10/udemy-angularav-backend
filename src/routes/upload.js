@@ -19,7 +19,6 @@ app.use(fileUpload());
 /***********************************************************
  * Carga de imágenes
  ***********************************************************/
-
 app.put('/:type/:id', mdwAuth.verifyToken, (req, res) => {
     const allowedExts = ['png', 'jpg', 'jpeg', '.gif'];
     const allowedTypes = ['doctors', 'hospitals', 'users'];

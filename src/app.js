@@ -1,21 +1,23 @@
-var express = require('express');
-var mongoose = require('mongoose');
-var bodyParser = require('body-parser');
+const path = require('path');
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const appRoutes = require('./routes/app');
+const loginRoutes = require('./routes/login');
+const usersRoutes = require('./routes/appusers');
+const hospitalsRoutes = require('./routes/hospitals');
+const doctorsRoutes = require('./routes/doctors');
+const searchRoutes = require('./routes/search');
+const uploadRoutes = require('./routes/upload');
+const imageRoutes = require('./routes/images');
 
 
 
-var appRoutes = require('./routes/app');
-var loginRoutes = require('./routes/login');
-var usersRoutes = require('./routes/appusers');
-var hospitalsRoutes = require('./routes/hospitals');
-var doctorsRoutes = require('./routes/doctors');
-var searchRoutes = require('./routes/search');
-var uploadRoutes = require('./routes/upload');
-var imageRoutes = require('./routes/images');
+const app = express();
 
-
-
-var app = express();
+app.use(express.static(path.resolve(__dirname, '../public')));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
