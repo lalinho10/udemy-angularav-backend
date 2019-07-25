@@ -95,7 +95,7 @@ app.get('/', (req, res) => {
 /***********************************************************
  * Creación de un nuevo usuario
  ***********************************************************/
-app.post('/', mdwAuth.verifyToken, (req, res) => {
+app.post('/', (req, res) => {
     const body = req.body;
 
     const appuser = new Appuser({
