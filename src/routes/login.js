@@ -110,10 +110,10 @@ app.post('/google', async(req, res) => {
             } else {
                 const token = jwt.sign({ user: appuserDB }, config.SEED, { expiresIn: 10 * 60 });
 
-                res.json({
+                res.status(200).json({
                     ok: true,
                     message: 'Successful login',
-                    usuario: appuserDB,
+                    user: appuserDB,
                     id: appuserDB.id,
                     token: token
                 });
@@ -128,7 +128,7 @@ app.post('/google', async(req, res) => {
             appuser.role = 'USER_ROLE';
             appuser.google = true;
 
-            const token = jwt.sign({ usuario: appuser }, config.SEED, { expiresIn: 10 * 60 });
+            const token = jwt.sign({ user: appuser }, config.SEED, { expiresIn: 10 * 60 });
 
             appuser.save((err, createdUser) => {
                 if (err) {
