@@ -150,7 +150,7 @@ function updateUserImage(idUser, imageName, res) {
 
             res.json({
                 ok: true,
-                usuario: usuarioUpd
+                user: usuarioUpd
             });
         });
     });
