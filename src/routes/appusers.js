@@ -12,10 +12,10 @@ const app = express();
  * Consulta de usuarios
  ***********************************************************/
 app.get('/', (req, res) => {
-    let pagina = req.query.pagina || 0;
-    pagina = Number(pagina);
+    let page = req.query.page || 0;
+    page = Number(page);
 
-    if (pagina <= 0) {
+    if (page <= 0) {
         return res.status(406).json({
             ok: false,
             message: 'Error while getting users',
@@ -46,9 +46,9 @@ app.get('/', (req, res) => {
         });
     }
 
-    let offset = (pagina - 1) * regspp;
+    let offset = (page - 1) * regspp;
 
-    Appuser.find({}, 'name email image role').skip(offset).limit(regspp).exec((err, appusers) => {
+    Appuser.find({}, 'name email image role google').skip(offset).limit(regspp).exec((err, users) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -72,18 +72,19 @@ app.get('/', (req, res) => {
 
             let responseObject = {};
 
-            if (appusers.length > 0) {
+            if (users.length > 0) {
                 responseObject = {
                     ok: true,
-                    appusers,
-                    desde: limInf,
-                    hasta: limSup,
-                    total: numUsers
+                    users,
+                    from: limInf,
+                    to: limSup,
+                    total: numUsers,
+                    lastPage: (limSupTemp > numUsers)
                 };
             } else {
                 responseObject = {
                     ok: true,
-                    appusers
+                    users
                 };
             }
 
