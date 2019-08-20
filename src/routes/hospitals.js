@@ -12,10 +12,10 @@ const app = express();
  * Consulta de hospitales
  ***********************************************************/
 app.get('/', (req, res) => {
-    let pagina = req.query.pagina || 0;
-    pagina = Number(pagina);
+    let page = req.query.page || 0;
+    page = Number(page);
 
-    if (pagina <= 0) {
+    if (page <= 0) {
         return res.status(406).json({
             ok: false,
             message: 'Error while getting hospitals',
@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
         });
     }
 
-    let offset = (pagina - 1) * regspp;
+    let offset = (page - 1) * regspp;
 
     Hospital.find({}).skip(offset).limit(regspp).populate('user', 'name email').exec((err, hospitals) => {
         if (err) {
@@ -76,9 +76,10 @@ app.get('/', (req, res) => {
                 responseObject = {
                     ok: true,
                     hospitals,
-                    desde: limInf,
-                    hasta: limSup,
-                    total: numHospitals
+                    from: limInf,
+                    to: limSup,
+                    total: numHospitals,
+                    lastPage: (limSupTemp >= numHospitals)
                 };
             } else {
                 responseObject = {

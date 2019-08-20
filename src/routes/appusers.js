@@ -79,7 +79,7 @@ app.get('/', (req, res) => {
                     from: limInf,
                     to: limSup,
                     total: numUsers,
-                    lastPage: (limSupTemp > numUsers)
+                    lastPage: (limSupTemp >= numUsers)
                 };
             } else {
                 responseObject = {
@@ -184,6 +184,20 @@ app.put('/:id', mdwAuth.verifyToken, (req, res) => {
  ***********************************************************/
 app.delete('/:id', mdwAuth.verifyToken, (req, res) => {
     const id = req.params.id;
+
+    if (id === req.user._id) {
+        return res.status(406).json({
+            ok: false,
+            message: 'Error while deleting a user',
+            err: {
+                errors: {
+                    id: {
+                        message: `El usuario en sesión no puede eliminarse`
+                    }
+                }
+            }
+        });
+    }
 
     Appuser.findByIdAndRemove(id, (err, removedUser) => {
         if (err) {
