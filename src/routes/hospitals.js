@@ -11,7 +11,7 @@ const app = express();
 /***********************************************************
  * Consulta de hospitales
  ***********************************************************/
-app.get('/', (req, res) => {
+app.get('/', mdwAuth.verifyToken, (req, res) => {
     let page = req.query.page || 0;
     page = Number(page);
 
@@ -89,6 +89,42 @@ app.get('/', (req, res) => {
             }
 
             res.status(200).json(responseObject);
+        });
+    });
+});
+
+/***********************************************************
+ * Consulta de hospital por id
+ ***********************************************************/
+app.get('/:id', mdwAuth.verifyToken, (req, res) => {
+    let id = req.params.id;
+
+    Hospital.findById(id, (err, hospitalDB) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error while getting hospitals',
+                err
+            });
+        }
+
+        if (!hospitalDB) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error while updating a hospital',
+                err: {
+                    errors: {
+                        id: {
+                            message: 'No se encontró algún hospital con el ID proporcionado'
+                        }
+                    }
+                }
+            });
+        }
+
+        return res.json({
+            ok: true,
+            hospital: hospitalDB
         });
     });
 });
