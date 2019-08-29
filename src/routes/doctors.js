@@ -93,6 +93,42 @@ app.get('/', (req, res) => {
 });
 
 /***********************************************************
+ * Consulta de doctor por id
+ ***********************************************************/
+app.get('/:id', mdwAuth.verifyToken, (req, res) => {
+    let id = req.params.id;
+
+    Doctor.findById(id, (err, doctorDB) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error while getting a doctor',
+                err
+            });
+        }
+
+        if (!doctorDB) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error while getting a doctor',
+                err: {
+                    errors: {
+                        id: {
+                            message: 'No se encontró algún hospital con el ID proporcionado'
+                        }
+                    }
+                }
+            });
+        }
+
+        return res.json({
+            ok: true,
+            hospital: doctorDB
+        });
+    });
+});
+
+/***********************************************************
  * Creación de un nuevo doctor
  ***********************************************************/
 app.post('/', mdwAuth.verifyToken, (req, res) => {
