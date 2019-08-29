@@ -103,7 +103,7 @@ app.get('/:id', mdwAuth.verifyToken, (req, res) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error while getting hospitals',
+                message: 'Error while getting a hospital',
                 err
             });
         }
@@ -111,7 +111,7 @@ app.get('/:id', mdwAuth.verifyToken, (req, res) => {
         if (!hospitalDB) {
             return res.status(400).json({
                 ok: false,
-                message: 'Error while updating a hospital',
+                message: 'Error while getting a hospital',
                 err: {
                     errors: {
                         id: {
@@ -134,8 +134,9 @@ app.get('/:id', mdwAuth.verifyToken, (req, res) => {
  ***********************************************************/
 app.post('/', mdwAuth.verifyToken, (req, res) => {
     const body = req.body;
+    const userId = body.user;
 
-    Appuser.findById(body.userId, (err, appuserDB) => {
+    Appuser.findById(userId, (err, appuserDB) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -160,7 +161,7 @@ app.post('/', mdwAuth.verifyToken, (req, res) => {
 
         const hospital = new Hospital({
             name: body.name,
-            user: body.userId
+            user: userId
         });
 
         hospital.save((err, createdHospital) => {
