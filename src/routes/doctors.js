@@ -98,7 +98,7 @@ app.get('/', (req, res) => {
 app.get('/:id', mdwAuth.verifyToken, (req, res) => {
     let id = req.params.id;
 
-    Doctor.findById(id, (err, doctorDB) => {
+    Doctor.findById(id).populate('hospital').exec((err, doctorDB) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -123,7 +123,7 @@ app.get('/:id', mdwAuth.verifyToken, (req, res) => {
 
         return res.json({
             ok: true,
-            hospital: doctorDB
+            doctor: doctorDB
         });
     });
 });
